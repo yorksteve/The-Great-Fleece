@@ -10,9 +10,16 @@ public class EnemyAI : MonoBehaviour
 
     private NavMeshAgent _agent;
     private Animator _anim;
+    private Vector3 _coinPos;
 
     private bool _reverse;
     private bool _targetReached;
+    private bool _coinTossed = false;
+
+    private void OnEnable()
+    {
+        Player.onToss += ChaseCoin;
+    }
 
     private void Start()
     {
@@ -22,7 +29,7 @@ public class EnemyAI : MonoBehaviour
 
     private void Update()
     {
-        if (_wayPoints.Count > 0 && _wayPoints[_currentTarget] != null)
+        if (_wayPoints.Count > 0 && _wayPoints[_currentTarget] != null && _coinTossed == false)
         {
             _agent.SetDestination(_wayPoints[_currentTarget].position);
 
@@ -54,6 +61,22 @@ public class EnemyAI : MonoBehaviour
                 StartCoroutine(WaitBeforeMoving());
             }
         }
+        else
+        {
+            float distance = Vector3.Distance(transform.position, _coinPos);
+            if (distance < 4f)
+            {
+                _anim.SetBool("Walk", false);
+            }
+        }
+    }
+
+    private void ChaseCoin(Vector3 pos)
+    {
+        _coinPos = pos;
+        _coinTossed = true;
+        _agent.SetDestination(pos);
+        _anim.SetBool("Walk", true);
     }
 
     IEnumerator WaitBeforeMoving()
@@ -88,5 +111,10 @@ public class EnemyAI : MonoBehaviour
             }
         }
         _targetReached = false;
+    }
+
+    private void OnDisable()
+    {
+        Player.onToss -= ChaseCoin;
     }
 }
